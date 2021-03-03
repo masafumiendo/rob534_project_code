@@ -8,7 +8,12 @@ that generates paths while leveraging path efficiency and localization error. We
 uncertainty, and generalization ability against several maps generated randomly.
 
 ## Prerequisites
-TBD
+Python 3.6 or later 
 
 ## Code
-TBD
+### map.py
+Implement MapGenerator class. It takes x- and y-axis limits, number of feature-rich regions, and radius of them.
+Methods are as follows:
+* **get_map** generates map w/ given parameters.
+* **reset_map** resets map.
+* **show_map** visualizes map w/ generated paths. 
