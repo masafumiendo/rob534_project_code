@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
+from matplotlib.animation import ArtistAnimation
 
 class MapGenerator:
 
@@ -41,11 +42,17 @@ class MapGenerator:
     def show_map(self, path=None):
         if self.fig is None:
             self.fig, self.ax = plt.subplots()
+            self.fig_list = []
         self.ax.imshow(self.map)
         if path is not None:
-            self.ax.plot(path[:, 0], path[:, 1], color='red')
+            fig = self.ax.plot(path[:, 0], path[:, 1], color='red')
+            self.fig_list.append(fig)
         plt.show(block=False)
         plt.pause(0.005)
+        
+    def generate_animation(self, name):
+        ani = ArtistAnimation(self.fig, self.fig_list)
+        ani.save(name, writer='pillow')
 
 if __name__ == '__main__':
     # test each method
@@ -62,3 +69,4 @@ if __name__ == '__main__':
         vertex = np.array([[x, y]])
         path = np.append(path, vertex, axis=0)
         mg.show_map(path)
+    mg.generate_animation('fig/random_planner.gif')

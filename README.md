@@ -17,3 +17,4 @@ Methods are as follows:
 * **get_map** generates map w/ given parameters.
 * **reset_map** resets map.
 * **show_map** visualizes map w/ generated paths. 
+* **generate_animation** generates .gif and save it.
