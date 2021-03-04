@@ -8,13 +8,14 @@ that generates paths while leveraging path efficiency and localization error. We
 uncertainty, and generalization ability against several maps generated randomly.
 
 ## Prerequisites
-Python 3.6 or later 
+Python 3.6 or later. Also, you need to use OpenCV package to use **get_mars_map** function.
 
 ## Code
 ### map.py
 Implement MapGenerator class. It takes x- and y-axis limits, number of feature-rich regions, and radius of them.
 Methods are as follows:
-* **get_map** generates map w/ given parameters.
-* **reset_map** resets map.
+* **get_random_map** generates random map w/ given parameters.
+* **get_mars_map** takes mars orbital image to generate map.
+* **reset_random_map** resets random map.
 * **show_map** visualizes map w/ generated paths. 
 * **generate_animation** generates .gif and save it.

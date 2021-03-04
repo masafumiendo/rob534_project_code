@@ -9,6 +9,7 @@ import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.animation import ArtistAnimation
+import cv2
 
 class MapGenerator:
 
@@ -21,8 +22,10 @@ class MapGenerator:
         self.map = np.zeros((self.y_limit, self.x_limit))
         self.fig = None
 
-    def get_map(self):
-
+    def get_random_map(self, x_limit=100, y_limit=100):
+        # init limits
+        self.x_limit = x_limit
+        self.y_limit = y_limit
         # put feature-rich circles randomly
         for i in range(self.num_circles):
             # generate center of circle
@@ -35,9 +38,28 @@ class MapGenerator:
 
         return self.map
 
-    def reset_map(self):
+    def get_mars_map(self, show=False):
+
+        # obtain mars map
+        map_raw = cv2.imread('fig/hirise_image_raw.png')
+        map_raw = cv2.cvtColor(map_raw, cv2.COLOR_BGR2RGB)
+        map_gray = cv2.cvtColor(map_raw, cv2.COLOR_RGB2GRAY)
+        # binary process
+        ret, self.map = cv2.threshold(map_gray, 0, 1, cv2.THRESH_OTSU)
+        if show:
+            fig, (ax1, ax2) = plt.subplots(2, 1)
+            ax1.imshow(map_raw)
+            ax2.imshow(self.map)
+            plt.show()
+
+        # reset limits
+        self.x_limit = self.map.shape[1]
+        self.y_limit = self.map.shape[0]
+        return self.map
+
+    def reset_random_map(self):
         self.map = np.zeros((self.y_limit, self.x_limit))
-        return self.get_map()
+        return self.get_random_map()
 
     def show_map(self, path=None):
         if self.fig is None:
@@ -57,14 +79,14 @@ class MapGenerator:
 if __name__ == '__main__':
     # test each method
     mg = MapGenerator()
-    map = mg.get_map()
+    map = mg.get_mars_map()
     mg.show_map()
 
     # sample to visualize randomly generate path
     path = np.array([[0, 0]])
     for i in range(20):
-        x = random.randint(0, 100)
-        y = random.randint(0, 100)
+        x = random.randint(0, mg.x_limit)
+        y = random.randint(0, mg.y_limit)
         print('x: {}, y: {}'.format(x, y))
         vertex = np.array([[x, y]])
         path = np.append(path, vertex, axis=0)
