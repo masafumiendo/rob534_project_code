@@ -18,34 +18,42 @@ class Graph:
         self.vertices = []
         self.edges = []
         
-def RRG(x_min, x_max, y_min, y_max, total_points, radius, starting_point = None):
-    
-    if starting_point is None:
-        starting_point = ((x_min + x_max) / 2, (y_min + y_max / 2))
-    
-    graph = Graph()
-    graph.vertices.append(starting_point)
-    current_points = 1
-    
-    while current_points < total_points:
+        self.radius = None
+        
+    def generate_RRG(self, x_min, x_max, y_min, y_max, total_points, radius, starting_point = None):
+        
+        self.radius = radius
+        
+        if starting_point is None:
+            starting_point = ((x_min + x_max) / 2, (y_min + y_max / 2))
+        
+        self.vertices.append(starting_point)
+        current_points = 1
+        
+        while current_points < total_points:
+            
+            # generate new point
+            new_x = np.random.uniform(low=x_min, high=x_max)
+            new_y = np.random.uniform(low=y_min, high=y_max)
+            
+            new_point = (new_x, new_y)
+            
+            self.add_vertex(new_point, self.radius)
+            current_points += 1
+        
+    def add_vertex(self, new_point, radius):
+        
         # make updated KD Tree
-        kdtree = KDTree(graph.vertices)
-        
-        # generate new point
-        new_x = np.random.uniform(low=x_min, high=x_max)
-        new_y = np.random.uniform(low=y_min, high=y_max)
-        
-        new_point = (new_x, new_y)
+        kdtree = KDTree(self.vertices)
         
         # find closest point to new point
         _, nearest_index = kdtree.query(new_point)
-        
-        nearest = graph.vertices[nearest_index]
+            
+        nearest = self.vertices[nearest_index]
         
         # add new point and edge to graph
-        graph.vertices.append(new_point)
-        graph.edges.append(Edge(new_point, nearest))
-        current_points += 1
+        self.vertices.append(new_point)
+        self.edges.append(Edge(new_point, nearest))
         
         # see if any extra connections are within distance
         close_point_indices = kdtree.query_ball_point(new_point, radius)
@@ -58,18 +66,32 @@ def RRG(x_min, x_max, y_min, y_max, total_points, radius, starting_point = None)
         
         # add near connections
         for close_point_index in close_point_indices:
-            graph.edges.append(Edge(new_point, graph.vertices[close_point_index]))
+            self.edges.append(Edge(new_point, self.vertices[close_point_index]))
             
-    return graph
+    def get_edges(self, vertex):
         
+        edges = []
+        for edge in self.edges:
+            
+            if edge.vertex_a == vertex or edge.vertex_b == vertex:
+                edges.append(edge)
+                
+        return edges
+    
+    def plot(self, display=True):
+        
+        for i in range(len(self.edges)):
+            x = [self.edges[i].vertex_a[0], self.edges[i].vertex_b[0]]
+            y = [self.edges[i].vertex_a[1], self.edges[i].vertex_b[1]]
+            
+            plt.plot(x, y, 'ko-')
+            
+        if display:
+            plt.show()
     
 if __name__ == "__main__":
-    graph = RRG(0, 1, 0, 1, 250, 0.15)
+    graph = Graph()
     
-    for i in range(len(graph.edges)):
-        x = [graph.edges[i].vertex_a[0], graph.edges[i].vertex_b[0]]
-        y = [graph.edges[i].vertex_a[1], graph.edges[i].vertex_b[1]]
-        
-        plt.plot(x, y, 'ko-')
-        
-    plt.show()
+    graph.generate_RRG(0, 1, 0, 1, 250, 0.12)
+    
+    graph.plot()
