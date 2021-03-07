@@ -4,9 +4,10 @@ import math
 
 
 class GenerateMatrices:
-    def __init__(self, ij_matrix, ji_matrix):
+    def __init__(self, ij_matrix, ji_matrix, sig_matrix):
         self.ij_matrix = ij_matrix
         self.ji_matrix = ji_matrix
+        self.sig_matrix = sig_matrix
 
 
 class error_propagation:
@@ -15,6 +16,8 @@ class error_propagation:
         self.edges = graph.edges
         self.vertices = graph.vertices
         self.matrix = []
+        self.wo_sig = wo_sig
+        self.vo_sig = vo_sig
 
         """# define the true state
         self.x_hat = []
@@ -63,9 +66,9 @@ class error_propagation:
     # The coefficient matrices
     def coefficient_matrix(self):
         for Edges in self.edges:
-            delta_x_ij = Edges.vertex_b[0] - Edges.vertex_a[0]
+            delta_x_ij = np.linalg.norm(Edges.vertex_b[0] - Edges.vertex_a[0])
             delta_y_ij = 0
-            delta_x_ji = Edges.vertex_a[0] - Edges.vertex_b[0]
+            delta_x_ji = np.linalg.norm(Edges.vertex_a[0] - Edges.vertex_b[0])
             delta_y_ji = 0
 
             theta_ij = math.atan2(Edges.vertex_b[1] - Edges.vertex_a[1], Edges.vertex_b[0] - Edges.vertex_a[0])
@@ -85,7 +88,9 @@ class error_propagation:
                              [np.sin(theta_ji), np.cos(theta_ji), 0],
                              [0, 0, 1]])
 
-            self.matrix.append(GenerateMatrices([A_ij, B_ij], [A_ji, B_ji]))
+            d_sig = delta_x_ij * self.vo_sig / self.wo_sig
+
+            self.matrix.append(GenerateMatrices([A_ij, B_ij], [A_ji, B_ji], d_sig))
 
         return self.matrix
 
@@ -104,11 +109,14 @@ class error_propagation:
 
 if __name__ == '__main__':
     graph = RRG(0, 1, 0, 1, 250, 0.15)
-    ep = error_propagation(graph)
+    d_vo = np.diag([4e-4, 4e-4, 3e-7])
+    d_wo = np.diag([1e-2, 1e-2, 3e-7])
+    ep = error_propagation(graph, wo_sig=d_wo, vo_sig=d_vo)
     matrix = ep.coefficient_matrix()
     for item in matrix:
         print(item.ij_matrix[0])
         print(item.ij_matrix[1])
         print(item.ji_matrix[0])
         print(item.ji_matrix[1])
+        print(item.sig_matrix)
 
