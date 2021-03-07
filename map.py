@@ -98,7 +98,7 @@ class MapGenerator:
 
 if __name__ == '__main__':
     # test each method
-    mg = MapGenerator(x_limit=200, y_limit=200, x_pixels=100, y_pixels=100)
+    mg = MapGenerator(x_limit=100, y_limit=100, x_pixels=100, y_pixels=100)
     map = mg.get_random_map()
     mg.show_map()
 
