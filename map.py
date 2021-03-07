@@ -13,7 +13,7 @@ import cv2
 
 class MapGenerator:
 
-    def __init__(self, x_limit=100, y_limit=100, x_pixels=None, y_pixels=None, num_circles=3, rad_circles=15):
+    def __init__(self, x_limit=100, y_limit=100, x_pixels=None, y_pixels=None, num_circles=5, rad_circles=15):
 
         self.x_limit = x_limit
         self.y_limit = y_limit
@@ -24,8 +24,8 @@ class MapGenerator:
         else:
             self.x_pixels = x_pixels
             self.y_pixels = y_pixels
-        self.x_arange = np.arange(self.x_pixels + 1)
-        self.y_arange = np.arange(self.y_pixels + 1)
+        self.x_scale = self.x_pixels / self.x_limit
+        self.y_scale = self.y_pixels / self.y_limit
 
         self.num_circles = num_circles
         self.rad_circles = rad_circles
@@ -63,15 +63,19 @@ class MapGenerator:
             ax2.imshow(self.map)
             plt.show()
 
-        # reset number of pixels for each axis
-        self.x_pixels = self.map.shape[1]
-        self.y_pixels = self.map.shape[0]
+        # reset map information
+        self.x_limit = self.map.shape[1]
+        self.y_limit = self.map.shape[0]
+        self.x_pixels = self.x_limit
+        self.y_pixels = self.y_limit
+        self.x_scale = 1
+        self.y_scale = 1
         return self.map
 
     def is_feature_rich(self, x, y):
-        x_index = x // 1
-        y_index = y // 1
-        return self.map[y_index, x_index]
+        x_index = x * self.x_scale // 1
+        y_index = y * self.y_scale // 1
+        return self.map[int(y_index), int(x_index)]
 
     def reset_random_map(self):
         self.map = np.zeros((self.y_pixels, self.x_pixels))
@@ -83,7 +87,7 @@ class MapGenerator:
             self.fig_list = []
         self.ax.imshow(self.map)
         if path is not None:
-            fig = self.ax.plot(path[:, 0], path[:, 1], color='red')
+            fig = self.ax.plot(path[:, 0] * self.x_scale, path[:, 1] * self.y_scale, color='red')
             self.fig_list.append(fig)
         plt.show(block=False)
         plt.pause(0.005)
@@ -94,15 +98,15 @@ class MapGenerator:
 
 if __name__ == '__main__':
     # test each method
-    mg = MapGenerator()
+    mg = MapGenerator(x_limit=200, y_limit=200, x_pixels=100, y_pixels=100)
     map = mg.get_random_map()
     mg.show_map()
 
     # sample to visualize randomly generate path
     path = np.array([[0, 0]])
     for i in range(10):
-        x = random.randint(0, mg.x_limit)
-        y = random.randint(0, mg.y_limit)
+        x = random.uniform(0, mg.x_limit)
+        y = random.uniform(0, mg.y_limit)
         tf = mg.is_feature_rich(x, y)
         print('x: {}, y: {}, feature: {}'.format(x, y, tf))
         vertex = np.array([[x, y]])

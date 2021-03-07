@@ -16,6 +16,7 @@ Implement MapGenerator class. It takes x- and y-axis limits, number of feature-r
 Methods are as follows:
 * **get_random_map** generates random map w/ given parameters.
 * **get_mars_map** takes mars orbital image to generate map.
+* **is_feature_rich** takes (x, y) to return True or False.
 * **reset_random_map** resets random map.
 * **show_map** visualizes map w/ generated paths. 
 * **generate_animation** generates .gif and save it.
