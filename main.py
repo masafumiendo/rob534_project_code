@@ -63,9 +63,9 @@ class error_propagation:
     # The coefficient matrices
     def coefficient_matrix(self):
         for Edges in self.edges:
-            delta_x_ij = Edges.vertex_b[0] - Edges.vertex_a[0]
+            delta_x_ij = np.linalg.norm(np.array(Edges.vertex_a) - np.array(Edges.vertex_b))
             delta_y_ij = 0
-            delta_x_ji = Edges.vertex_a[0] - Edges.vertex_b[0]
+            delta_x_ji = delta_x_ij
             delta_y_ji = 0
 
             theta_ij = math.atan2(Edges.vertex_b[1] - Edges.vertex_a[1], Edges.vertex_b[0] - Edges.vertex_a[0])
