@@ -13,25 +13,36 @@ import cv2
 
 class MapGenerator:
 
-    def __init__(self, x_limit=100, y_limit=100, num_circles=3, rad_circles=15):
+    def __init__(self, x_limit=100, y_limit=100, x_pixels=None, y_pixels=None, num_circles=3, rad_circles=15):
+
         self.x_limit = x_limit
         self.y_limit = y_limit
+        # if no specific description, one pixel corresponds one meter
+        if x_pixels == None and y_pixels == None:
+            self.x_pixels = self.x_limit
+            self.y_pixels = self.y_limit
+        else:
+            self.x_pixels = x_pixels
+            self.y_pixels = y_pixels
+        self.x_arange = np.arange(self.x_pixels + 1)
+        self.y_arange = np.arange(self.y_pixels + 1)
+
         self.num_circles = num_circles
         self.rad_circles = rad_circles
         # init map w/ all feature-poor region (expressed as "0")
-        self.map = np.zeros((self.y_limit, self.x_limit))
+        self.map = np.zeros((self.y_pixels, self.x_pixels))
         self.fig = None
 
-    def get_random_map(self, x_limit=100, y_limit=100):
-        # init limits
-        self.x_limit = x_limit
-        self.y_limit = y_limit
+    def get_random_map(self, x_pixels=100, y_pixels=100):
+        # init number of pixels for each axis
+        self.x_pixels = x_pixels
+        self.y_pixels = y_pixels
         # put feature-rich circles randomly
         for i in range(self.num_circles):
             # generate center of circle
-            xc = random.randint(self.rad_circles, self.x_limit - self.rad_circles)
-            yc = random.randint(self.rad_circles, self.y_limit - self.rad_circles)
-            x, y = np.meshgrid(np.arange(self.x_limit), np.arange(self.y_limit))
+            xc = random.randint(self.rad_circles, self.x_pixels - self.rad_circles)
+            yc = random.randint(self.rad_circles, self.y_pixels - self.rad_circles)
+            x, y = np.meshgrid(np.arange(self.x_pixels), np.arange(self.y_pixels))
             d2 = (x - xc)**2 + (y - yc)**2
             mask = d2 < self.rad_circles**2
             self.map[mask] = 1
@@ -52,13 +63,18 @@ class MapGenerator:
             ax2.imshow(self.map)
             plt.show()
 
-        # reset limits
-        self.x_limit = self.map.shape[1]
-        self.y_limit = self.map.shape[0]
+        # reset number of pixels for each axis
+        self.x_pixels = self.map.shape[1]
+        self.y_pixels = self.map.shape[0]
         return self.map
 
+    def is_feature_rich(self, x, y):
+        x_index = x // 1
+        y_index = y // 1
+        return self.map[y_index, x_index]
+
     def reset_random_map(self):
-        self.map = np.zeros((self.y_limit, self.x_limit))
+        self.map = np.zeros((self.y_pixels, self.x_pixels))
         return self.get_random_map()
 
     def show_map(self, path=None):
@@ -79,15 +95,16 @@ class MapGenerator:
 if __name__ == '__main__':
     # test each method
     mg = MapGenerator()
-    map = mg.get_mars_map()
+    map = mg.get_random_map()
     mg.show_map()
 
     # sample to visualize randomly generate path
     path = np.array([[0, 0]])
-    for i in range(20):
+    for i in range(10):
         x = random.randint(0, mg.x_limit)
         y = random.randint(0, mg.y_limit)
-        print('x: {}, y: {}'.format(x, y))
+        tf = mg.is_feature_rich(x, y)
+        print('x: {}, y: {}, feature: {}'.format(x, y, tf))
         vertex = np.array([[x, y]])
         path = np.append(path, vertex, axis=0)
         mg.show_map(path)
