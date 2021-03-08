@@ -10,6 +10,7 @@ matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.animation import ArtistAnimation
 import cv2
+import math
 
 class MapGenerator:
 
@@ -72,9 +73,9 @@ class MapGenerator:
         self.y_scale = 1
         return self.map
 
-    def is_feature_rich(self, x, y):
-        x_index = x * self.x_scale // 1
-        y_index = y * self.y_scale // 1
+    def is_feature_rich(self, location):
+        x_index = location[0] * self.x_scale // 1
+        y_index = location[1] * self.y_scale // 1
         return self.map[int(y_index), int(x_index)]
 
     def reset_random_map(self):
@@ -99,7 +100,7 @@ class MapGenerator:
 if __name__ == '__main__':
     # test each method
     mg = MapGenerator(x_limit=100, y_limit=100, x_pixels=100, y_pixels=100)
-    map = mg.get_random_map()
+    rover_map = mg.get_random_map()
     mg.show_map()
 
     # sample to visualize randomly generate path
