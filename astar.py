@@ -37,15 +37,16 @@ class RoverAStar:
             self.cost = euclidianDist
         else:
             self.cost = errorProp
-            self.error_calc = error_propagation.ErrorCalculator(world_map, np.diag([4e-4, 4e-4, 3e-7]), np.diag([1e-2, 1e-2, 3e-7]))
+        
+        self.error_calc = error_propagation.ErrorCalculator(world_map, np.diag([4e-4, 4e-4, 3e-7]), np.diag([1e-2, 1e-2, 3e-7]))
             
         self.graph = graph
         if start not in graph.vertices:
             self.graph.add_vertex(start, graph.radius)
         if goal not in graph.vertices:
             self.graph.add_vertex(goal, graph.radius)
-        if self.using_error: 
-            self.error_calc.calculate_matrices(self.graph.edges)
+        
+        self.error_calc.calculate_matrices(self.graph.edges)
         self.start = start
         self.goal = goal
         self.pq = None
@@ -89,20 +90,16 @@ class RoverAStar:
             for edge in edges:
                 if edge.vertex_a == vertex:
                     neighbor_loc = edge.vertex_b
-                    if self.using_error:
-                        A = edge.data.A_ij
-                        B_dSIG_BT = edge.data.B_dSIG_BT_ij
+                    A = edge.data.A_ij
+                    B_dSIG_BT = edge.data.B_dSIG_BT_ij
                 else:
                     neighbor_loc = edge.vertex_a
-                    if self.using_error:
-                        A = edge.data.A_ji
-                        B_dSIG_BT = edge.data.B_dSIG_BT_ji
+                    A = edge.data.A_ji
+                    B_dSIG_BT = edge.data.B_dSIG_BT_ji
                     
                 if neighbor_loc not in self.closed:
-                    if not self.using_error:
-                        P = None
-                    else:
-                        P = A * node.P * A.T + B_dSIG_BT
+
+                    P = A * node.P * A.T + B_dSIG_BT
                         
                     if not self.pq.test(neighbor_loc):
                         neighbor_node = Node(neighbor_loc, node.cost + self.cost(vertex, neighbor_loc, P), node, P)
@@ -124,32 +121,73 @@ if __name__ == "__main__":
     
     import rover_map
     world_map = rover_map.MapGenerator()
-    # world_map.get_mars_map()
     world_map.get_random_map()
     
     from RRG import Graph
     graph = Graph()
-    graph.generate_RRG(0, world_map.x_limit, 0, world_map.y_limit, 2000, 10)
     
-    astar_error = RoverAStar(graph, world_map, start=(1, 1), goal=(99, 99), cost_type="error")
-    astar_dist  = RoverAStar(graph, world_map, start=(1, 1), goal=(99, 99), cost_type="distance")
-    error_node = astar_error.run()
-    dist_node = astar_dist.run()
-    nodes = [error_node, dist_node]
-    colors = ["r", "b"]
-    # graph.plot(display=False)
-    for node, color in zip(nodes, colors):
-        path = []
-        while node != None:
-            
-            path.append(node.vertex)
-            node = node.parent
-        
-        import matplotlib.pyplot as plt
-        
-        for i in range(len(path) - 1):
-            
-            plt.plot((path[i][0], path[i+1][0]), (path[i][1], path[i+1][1]), '%so-' % color)
+    import time
+    import matplotlib.pyplot as plt
     
-    plt.imshow(world_map.map)
-    plt.show()
+    display = False
+    num_vertices = 1000
+    radius = 10
+    num_iterations = 100
+    path_lengths = [[], []]
+    error_covs = [[], []]
+    for iteration in range(num_iterations):
+        print("Iteration", iteration)
+        
+        world_map = rover_map.MapGenerator()
+        world_map.get_random_map()
+        
+        graph.generate_RRG(0, world_map.x_limit, 0, world_map.y_limit, num_vertices, radius)
+        
+        start = tuple(np.random.uniform(low=0, high=world_map.x_limit * 0.1, size=2))
+        end = tuple(np.random.uniform(low=world_map.y_limit * 0.9, high=world_map.y_limit, size=2))
+        
+        astar_error = RoverAStar(graph, world_map, start=start, goal=end, cost_type="error")
+        astar_dist  = RoverAStar(graph, world_map, start=start, goal=end, cost_type="distance")
+        error_node = astar_error.run()
+        dist_node = astar_dist.run()
+        nodes = [error_node, dist_node]
+        colors = ["r", "b"]
+        
+        plt.imshow(world_map.map)
+        for node, color in zip(nodes, colors):
+            if color == "r":
+                index = 0
+            else:
+                index = 1
+                
+            error_covs[index].append(np.trace(node.P))
+            
+            path = []
+            while node != None:
+                P = node.P
+                path.append(node.vertex)
+                node = node.parent
+                
+            dist = 0
+            for i in range(len(path) - 1):
+                
+                dx = path[i + 1][0] - path[i][0]
+                dy = path[i + 1][1] - path[i][1]
+                dist += np.linalg.norm((dx, dy))
+                
+                plt.plot((path[i][0], path[i+1][0]), (path[i][1], path[i+1][1]), '%so-' % color)
+                
+            path_lengths[index].append(dist)
+    
+        if display:
+            plt.show()
+            
+        plt.savefig("samples/paths_%d.png" % iteration)
+        plt.clf()
+        
+        print(error_covs, path_lengths)
+        import pickle
+        with open("sample_data_%dvertices_%.2fradius.pickle" % (num_vertices, radius), "wb") as f:
+            pickle.dump({"path_lengths" : path_lengths, "error_covs" : error_covs}, f)
+        
+    
