@@ -185,7 +185,7 @@ if __name__ == "__main__":
         plt.savefig("samples/paths_%d.png" % iteration)
         plt.clf()
         
-        print(error_covs, path_lengths)
+        # print(error_covs, path_lengths)
         import pickle
         with open("sample_data_%dvertices_%.2fradius.pickle" % (num_vertices, radius), "wb") as f:
             pickle.dump({"path_lengths" : path_lengths, "error_covs" : error_covs}, f)
