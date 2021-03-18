@@ -63,7 +63,18 @@ class MapGenerator:
             ax1.imshow(map_raw)
             ax2.imshow(self.map)
             plt.show()
-        self.map = self.map[100:200, 580:680]
+
+        # reset map information
+        self.x_limit = self.map.shape[1]
+        self.y_limit = self.map.shape[0]
+        self.x_pixels = self.x_limit
+        self.y_pixels = self.y_limit
+        self.x_scale = 1
+        self.y_scale = 1
+        return self.map
+
+    def select_location(self, x_range, y_range):
+        self.map = self.map[y_range[0]:y_range[1], x_range[0]:x_range[1]]
         # reset map information
         self.x_limit = self.map.shape[1]
         self.y_limit = self.map.shape[0]
@@ -90,9 +101,8 @@ class MapGenerator:
         if path is not None:
             fig = self.ax.plot(path[:, 0] * self.x_scale, path[:, 1] * self.y_scale, color='red')
             self.fig_list.append(fig)
-        plt.show(block=False)
-        plt.pause(0.005)
-        
+        plt.show()
+
     def generate_animation(self, name):
         ani = ArtistAnimation(self.fig, self.fig_list)
         ani.save(name, writer='pillow')
@@ -100,17 +110,11 @@ class MapGenerator:
 if __name__ == '__main__':
     # test each method
     mg = MapGenerator(x_limit=100, y_limit=100, x_pixels=100, y_pixels=100)
-    rover_map = mg.get_random_map()
-    mg.show_map()
+    rover_map = mg.get_mars_map()
+    plt.imshow(mg.map)
+    plt.savefig('fig/binary_mars.png')
+    plt.show()
 
-    # sample to visualize randomly generate path
-    path = np.array([[0, 0]])
-    for i in range(10):
-        x = random.uniform(0, mg.x_limit)
-        y = random.uniform(0, mg.y_limit)
-        tf = mg.is_feature_rich(x, y)
-        print('x: {}, y: {}, feature: {}'.format(x, y, tf))
-        vertex = np.array([[x, y]])
-        path = np.append(path, vertex, axis=0)
-        mg.show_map(path)
-    mg.generate_animation('fig/random_planner.gif')
+    mg.select_location((600, 700), (100, 200))
+    plt.imshow(mg.map)
+    plt.show()

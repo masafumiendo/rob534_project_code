@@ -11,11 +11,12 @@ if __name__ == '__main__':
 
     world_map = MapGenerator()
     world_map.get_mars_map()
+    world_map.select_location((580, 680), (100, 200))
 
     plt.imshow(world_map.map)
     plt.show()
 
-    num_vertices = 500
+    num_vertices = 1000
     radius = 10
     path_lengths = [[], []]
     error_covs = [[], []]
@@ -24,16 +25,13 @@ if __name__ == '__main__':
 
     start = tuple(np.random.uniform(low=0, high=world_map.x_limit * 0.1, size=2))
     end = tuple(np.random.uniform(low=world_map.y_limit * 0.9, high=world_map.y_limit, size=2))
-    start = (30, 5)
-    end = (83, 83)
+
     astar_error = RoverAStar(graph, world_map, start=start, goal=end, cost_type="error")
     astar_dist  = RoverAStar(graph, world_map, start=start, goal=end, cost_type="distance")
     error_node = astar_error.run()
     dist_node = astar_dist.run()
     nodes = [error_node, dist_node]
     colors = ["r", "b"]
-
-    graph.plot(display=False)
 
     plt.imshow(world_map.map)
     for node, color in zip(nodes, colors):
