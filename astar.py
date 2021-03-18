@@ -7,7 +7,7 @@ def euclidianDist(a, b, unused):
     
     return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
 
-def errorProp(a, b, P, alpha=10):
+def errorProp(a, b, P, alpha=1000):
     
     dist = euclidianDist(a, b, None)
     return dist + alpha * np.trace(P)

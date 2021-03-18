@@ -63,7 +63,7 @@ class MapGenerator:
             ax1.imshow(map_raw)
             ax2.imshow(self.map)
             plt.show()
-
+        self.map = self.map[100:200, 580:680]
         # reset map information
         self.x_limit = self.map.shape[1]
         self.y_limit = self.map.shape[0]
