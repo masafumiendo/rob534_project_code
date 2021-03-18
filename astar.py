@@ -3,18 +3,18 @@ import priority_queue
 import numpy as np
 import error_propagation
 
-def euclidianDist(a, b, unused):
+def euclidianDist(a, b, unused1, unused2):
     
     return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
 
-def errorProp(a, b, P, alpha=1000):
+def errorProp(a, b, P, alpha):
     
-    dist = euclidianDist(a, b, None)
+    dist = euclidianDist(a, b, None, None)
     return dist + alpha * np.trace(P)
 
 def errorPropMin(a, b, dsig_min):
     
-    dist = euclidianDist(a, b, None)
+    dist = euclidianDist(a, b, None, None)
     return dist * (1 + np.trace(dsig_min))
 
 class Node:
@@ -28,7 +28,7 @@ class Node:
         
 class RoverAStar:
     
-    def __init__(self, graph, world_map, start, goal, cost_type):
+    def __init__(self, graph, world_map, start, goal, cost_type, alpha):
         
         self.heuristic = None
         self.error_calc = None
@@ -37,6 +37,7 @@ class RoverAStar:
             self.cost = euclidianDist
         else:
             self.cost = errorProp
+        self.alpha = alpha
         
         self.error_calc = error_propagation.ErrorCalculator(world_map, np.diag([4e-4, 4e-4, 3e-7]), np.diag([1e-2, 1e-2, 3e-7]))
             
@@ -65,7 +66,7 @@ class RoverAStar:
     def getHeuristic(self, location):
 
         if not self.using_error:
-            return euclidianDist(self.goal, location, None)
+            return euclidianDist(self.goal, location, None, None)
         else:
             return errorPropMin(self.goal, location, self.error_calc.vo_sig)
         
@@ -102,12 +103,12 @@ class RoverAStar:
                     P = A * node.P * A.T + B_dSIG_BT
                         
                     if not self.pq.test(neighbor_loc):
-                        neighbor_node = Node(neighbor_loc, node.cost + self.cost(vertex, neighbor_loc, P), node, P)
+                        neighbor_node = Node(neighbor_loc, node.cost + self.cost(vertex, neighbor_loc, P, self.alpha), node, P)
                         self.pq.insert(neighbor_loc, neighbor_node.cost + self.getHeuristic(neighbor_loc))
                         self.open[neighbor_loc] = neighbor_node
                     else:
                         neighbor_node = self.open[neighbor_loc]
-                        new_cost = node.cost + self.cost(vertex, neighbor_loc, P)
+                        new_cost = node.cost + self.cost(vertex, neighbor_loc, P, self.alpha)
                         if new_cost  < neighbor_node.cost:
                             neighbor_node.P = P
                             neighbor_node.cost = new_cost
@@ -133,8 +134,8 @@ if __name__ == "__main__":
     num_vertices = 1000
     radius = 10
     num_iterations = 100
-    path_lengths = [[], []]
-    error_covs = [[], []]
+    path_lengths = [[], [], [], []]
+    error_covs = [[], [], [], []]
     for iteration in range(num_iterations):
         print("Iteration", iteration)
         
@@ -146,19 +147,19 @@ if __name__ == "__main__":
         start = tuple(np.random.uniform(low=0, high=world_map.x_limit * 0.1, size=2))
         end = tuple(np.random.uniform(low=world_map.y_limit * 0.9, high=world_map.y_limit, size=2))
         
-        astar_error = RoverAStar(graph, world_map, start=start, goal=end, cost_type="error")
-        astar_dist  = RoverAStar(graph, world_map, start=start, goal=end, cost_type="distance")
-        error_node = astar_error.run()
+        astar_error1 = RoverAStar(graph, world_map, start=start, goal=end, cost_type="error", alpha=10)
+        astar_error2 = RoverAStar(graph, world_map, start=start, goal=end, cost_type="error", alpha=100)
+        astar_error3 = RoverAStar(graph, world_map, start=start, goal=end, cost_type="error", alpha=1000)
+        astar_dist   = RoverAStar(graph, world_map, start=start, goal=end, cost_type="distance", alpha=None)
+        error_node1 = astar_error1.run()
+        error_node2 = astar_error2.run()
+        error_node3 = astar_error3.run()
         dist_node = astar_dist.run()
-        nodes = [error_node, dist_node]
-        colors = ["r", "b"]
+        nodes = [error_node1, error_node2, error_node3, dist_node]
+        colors = ["r", "r", "r", "b"]
         
         plt.imshow(world_map.map)
-        for node, color in zip(nodes, colors):
-            if color == "r":
-                index = 0
-            else:
-                index = 1
+        for index, (node, color) in enumerate(zip(nodes, colors)):
                 
             error_covs[index].append(np.trace(node.P))
             
@@ -169,25 +170,40 @@ if __name__ == "__main__":
                 node = node.parent
                 
             dist = 0
+            path_x = []
+            path_y = []
             for i in range(len(path) - 1):
                 
                 dx = path[i + 1][0] - path[i][0]
                 dy = path[i + 1][1] - path[i][1]
                 dist += np.linalg.norm((dx, dy))
-                
-                plt.plot((path[i][0], path[i+1][0]), (path[i][1], path[i+1][1]), '%so-' % color)
+                path_x.append(path[i][0])
+                path_y.append(path[i][1])
+
+            path_x.append(path[-1][0])
+            path_y.append(path[-1][1])
+            if index == 0:
+                plt.plot(path_x, path_y, 'ro-', label='alpha=10')
+            elif index == 1:
+                plt.plot(path_x, path_y, 'ro--', label='alpha=100')
+            elif index == 2:
+                plt.plot(path_x, path_y, 'ro:', label='alpha=1000')
+            elif index == 3:
+                plt.plot(path_x, path_y, 'bo-', label='A*')
                 
             path_lengths[index].append(dist)
-    
+        
+        plt.legend()
+        
         if display:
             plt.show()
             
-        plt.savefig("samples/paths_%d.png" % iteration)
+        plt.savefig("samples_alpha/paths_%d.png" % iteration)
         plt.clf()
-        
+
         # print(error_covs, path_lengths)
         import pickle
-        with open("sample_data_%dvertices_%.2fradius.pickle" % (num_vertices, radius), "wb") as f:
+        with open("sample_data_alpha_%dvertices_%.2fradius.pickle" % (num_vertices, radius), "wb") as f:
             pickle.dump({"path_lengths" : path_lengths, "error_covs" : error_covs}, f)
         
     
