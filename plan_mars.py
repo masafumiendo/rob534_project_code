@@ -11,7 +11,7 @@ if __name__ == '__main__':
 
     world_map = MapGenerator()
     world_map.get_mars_map()
-    world_map.select_location((580, 680), (100, 200))
+    world_map.select_location((590, 690), (100, 200))
 
     plt.imshow(world_map.map)
     plt.show()
@@ -26,19 +26,15 @@ if __name__ == '__main__':
     start = tuple(np.random.uniform(low=0, high=world_map.x_limit * 0.1, size=2))
     end = tuple(np.random.uniform(low=world_map.y_limit * 0.9, high=world_map.y_limit, size=2))
 
-    astar_error = RoverAStar(graph, world_map, start=start, goal=end, cost_type="error")
-    astar_dist  = RoverAStar(graph, world_map, start=start, goal=end, cost_type="distance")
+    astar_error = RoverAStar(graph, world_map, start=start, goal=end, cost_type="error", alpha=10)
+    astar_dist  = RoverAStar(graph, world_map, start=start, goal=end, cost_type="distance", alpha=None)
     error_node = astar_error.run()
     dist_node = astar_dist.run()
     nodes = [error_node, dist_node]
     colors = ["r", "b"]
 
     plt.imshow(world_map.map)
-    for node, color in zip(nodes, colors):
-        if color == "r":
-            index = 0
-        else:
-            index = 1
+    for index, (node, color) in enumerate(zip(nodes, colors)):
 
         error_covs[index].append(np.trace(node.P))
 
@@ -49,14 +45,29 @@ if __name__ == '__main__':
             node = node.parent
 
         dist = 0
+        path_x = []
+        path_y = []
         for i in range(len(path) - 1):
 
             dx = path[i + 1][0] - path[i][0]
             dy = path[i + 1][1] - path[i][1]
             dist += np.linalg.norm((dx, dy))
+            path_x.append(path[i][0])
+            path_y.append(path[i][1])
 
-            plt.plot((path[i][0], path[i+1][0]), (path[i][1], path[i+1][1]), '%so-' % color)
+        path_x.append(path[-1][0])
+        path_y.append(path[-1][1])
+        if index == 0:
+            plt.plot(path_x, path_y, 'ro-', label='EPA*')
+        elif index == 1:
+            plt.plot(path_x, path_y, 'bo-', label='A*')
 
         path_lengths[index].append(dist)
+
+    print(error_covs, path_lengths)
+
+    plt.xlabel('x [m]')
+    plt.ylabel('y [m]')
+    plt.legend()
 
     plt.show()

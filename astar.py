@@ -8,7 +8,7 @@ def euclidianDist(a, b, unused1, unused2):
     return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
 
 def errorProp(a, b, P, alpha):
-    
+
     dist = euclidianDist(a, b, None, None)
     return dist + alpha * np.trace(P)
 
@@ -130,10 +130,10 @@ if __name__ == "__main__":
     import time
     import matplotlib.pyplot as plt
     
-    display = False
+    display = True
     num_vertices = 1000
     radius = 10
-    num_iterations = 100
+    num_iterations = 1
     path_lengths = [[], [], [], []]
     error_covs = [[], [], [], []]
     for iteration in range(num_iterations):
@@ -148,14 +148,15 @@ if __name__ == "__main__":
         end = tuple(np.random.uniform(low=world_map.y_limit * 0.9, high=world_map.y_limit, size=2))
         
         astar_error1 = RoverAStar(graph, world_map, start=start, goal=end, cost_type="error", alpha=10)
-        astar_error2 = RoverAStar(graph, world_map, start=start, goal=end, cost_type="error", alpha=100)
-        astar_error3 = RoverAStar(graph, world_map, start=start, goal=end, cost_type="error", alpha=1000)
+        # astar_error2 = RoverAStar(graph, world_map, start=start, goal=end, cost_type="error", alpha=100)
+        # astar_error3 = RoverAStar(graph, world_map, start=start, goal=end, cost_type="error", alpha=1000)
         astar_dist   = RoverAStar(graph, world_map, start=start, goal=end, cost_type="distance", alpha=None)
         error_node1 = astar_error1.run()
-        error_node2 = astar_error2.run()
-        error_node3 = astar_error3.run()
+        # error_node2 = astar_error2.run()
+        # error_node3 = astar_error3.run()
         dist_node = astar_dist.run()
-        nodes = [error_node1, error_node2, error_node3, dist_node]
+        nodes = [error_node1, dist_node]
+        # nodes = [error_node1, error_node2, error_node3, dist_node]
         colors = ["r", "r", "r", "b"]
         
         plt.imshow(world_map.map)
@@ -183,27 +184,28 @@ if __name__ == "__main__":
             path_x.append(path[-1][0])
             path_y.append(path[-1][1])
             if index == 0:
-                plt.plot(path_x, path_y, 'ro-', label='alpha=10')
-            elif index == 1:
+                plt.plot(path_x, path_y, 'ro-', label='EPA*')
+            elif index == 3:
                 plt.plot(path_x, path_y, 'ro--', label='alpha=100')
             elif index == 2:
                 plt.plot(path_x, path_y, 'ro:', label='alpha=1000')
-            elif index == 3:
+            elif index == 1:
                 plt.plot(path_x, path_y, 'bo-', label='A*')
                 
             path_lengths[index].append(dist)
-        
+        plt.xlabel('x [m]')
+        plt.ylabel('y [m]')
         plt.legend()
         
         if display:
             plt.show()
             
-        plt.savefig("samples_alpha/paths_%d.png" % iteration)
-        plt.clf()
+        # plt.savefig("paths_%d.png" % iteration)
+        # plt.clf()
 
-        # print(error_covs, path_lengths)
-        import pickle
-        with open("sample_data_alpha_%dvertices_%.2fradius.pickle" % (num_vertices, radius), "wb") as f:
-            pickle.dump({"path_lengths" : path_lengths, "error_covs" : error_covs}, f)
+        # # print(error_covs, path_lengths)
+        # import pickle
+        # with open("sample_data_alpha_%dvertices_%.2fradius.pickle" % (num_vertices, radius), "wb") as f:
+        #     pickle.dump({"path_lengths" : path_lengths, "error_covs" : error_covs}, f)
         
     

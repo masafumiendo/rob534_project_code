@@ -110,11 +110,10 @@ class MapGenerator:
 if __name__ == '__main__':
     # test each method
     mg = MapGenerator(x_limit=100, y_limit=100, x_pixels=100, y_pixels=100)
-    rover_map = mg.get_mars_map()
+    rover_map = mg.get_random_map()
     plt.imshow(mg.map)
+    plt.xlabel('x [m]')
+    plt.ylabel('y [m]')
     plt.savefig('fig/binary_mars.png')
     plt.show()
 
-    mg.select_location((600, 700), (100, 200))
-    plt.imshow(mg.map)
-    plt.show()
